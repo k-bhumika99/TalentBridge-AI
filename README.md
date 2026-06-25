@@ -102,3 +102,7 @@ boomerang_ai/
 | SMTP_PORT      | SMTP port                       | 587                  |
 | SMTP_USER      | Sender email address            | *(required for send)*|
 | SMTP_PASS      | Email app password              | *(required for send)*|
+
+
+
+Deployment url : https://alarm-poker-frustrate.ngrok-free.dev
