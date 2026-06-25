@@ -1,4 +1,4 @@
-# Boomerang AI — Smart Hiring Reconnect System
+#TalentBridge  
 
 An AI-powered HR tool that re-engages high-potential past candidates using Gemini LLM matching and personalized email outreach.
 
