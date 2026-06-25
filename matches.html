@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% block title %}Matches{% endblock %}
+{% block page_title %}AI Match Results{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <div>
+    <h2 class="section-title">{{ job.job_title }}</h2>
+    <div class="section-sub">Requires: {{ job.skills_required }} &middot; {{ job.experience_required }}+ yrs</div>
+  </div>
+  <a href="{{ url_for('jobs') }}" class="btn btn-outline">&#8592; Back to Jobs</a>
+</div>
+
+{% if matches %}
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Rank</th>
+        <th>Candidate</th>
+        <th>Role / Exp</th>
+        <th>Skills</th>
+        <th>Match Score</th>
+        <th>Status</th>
+        <th>Email Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in matches %}
+      <tr>
+        <td class="rank-cell">
+          {% if loop.index == 1 %}
+          <span>&#129351;</span>
+          {% elif loop.index == 2 %}
+          <span>&#129352;</span>
+          {% elif loop.index == 3 %}
+          <span>&#129353;</span>
+          {% else %}
+          {{ loop.index }}
+          {% endif %}
+        </td>
+        <td>
+          <div class="cand-name-sm">{{ m.name }}</div>
+          <div class="cand-email-sm">{{ m.email }}</div>
+        </td>
+        <td>
+          <span class="role-pill">{{ m.previous_role }}</span>
+          <br />
+          <small>{{ m.experience }} yrs</small>
+        </td>
+        <td class="skills-cell">
+          {% for sk in m.skills.split(',')[:3] %}
+          <span class="skill-tag">{{ sk.strip() }}</span>
+          {% endfor %}
+        </td>
+        <td>
+          <div class="score-wrap">
+            {% if m.match_score >= 75 %}
+            <div class="score-ring ring-green">{{ m.match_score|int }}%</div>
+            {% elif m.match_score >= 50 %}
+            <div class="score-ring ring-gold">{{ m.match_score|int }}%</div>
+            {% else %}
+            <div class="score-ring ring-gray">{{ m.match_score|int }}%</div>
+            {% endif %}
+          </div>
+        </td>
+        <td>
+          {% if m.status == 'Shortlisted' %}
+          <span class="badge badge-green">{{ m.status }}</span>
+          {% else %}
+          <span class="badge badge-gray">{{ m.status }}</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if m.email_id and m.sent_status == 'Sent' %}
+          <span class="badge badge-green">&#10003; Sent</span>
+          {% else %}
+          <div class="action-group">
+            <button class="btn btn-sm btn-outline gen-email-btn"
+                    data-cid="{{ m.cid }}"
+                    data-jid="{{ job.id }}"
+                    data-name="{{ m.name | escape }}">
+              &#10022; Generate
+            </button>
+            {% if m.email_id %}
+            <button class="btn btn-sm btn-primary send-email-btn"
+                    data-email-id="{{ m.email_id }}">
+              &#9993; Send
+            </button>
+            {% endif %}
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">&#10227;</div>
+  <p>No matches yet. <a href="{{ url_for('jobs') }}">Run the AI matching engine</a> first.</p>
+</div>
+{% endif %}
+
+<!-- Email Preview Modal -->
+<div id="emailModal" class="modal-overlay" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3>Generated Email Preview</h3>
+      <button onclick="closeEmailModal()" class="modal-close">&#10005;</button>
+    </div>
+    <div class="email-preview">
+      <div class="email-field">
+        <span class="email-label">To:</span>
+        <span id="previewTo"></span>
+      </div>
+      <div class="email-field">
+        <span class="email-label">Subject:</span>
+        <span id="previewSubject"></span>
+      </div>
+      <hr class="email-divider" />
+      <div class="email-body-preview" id="previewBody"></div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="closeEmailModal()" class="btn btn-outline">Close</button>
+      <button id="sendNowBtn" class="btn btn-primary">&#9993; Send Email</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.gen-email-btn').forEach(function(btn) {
+  btn.addEventListener('click', async function() {
+    var cid  = btn.getAttribute('data-cid');
+    var jid  = btn.getAttribute('data-jid');
+    var name = btn.getAttribute('data-name');
+    btn.textContent = 'Generating...';
+    btn.disabled = true;
+
+    var res  = await fetch('/email/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({candidate_id: cid, job_id: jid})
+    });
+    var data = await res.json();
+    btn.textContent = 'Regenerate';
+    btn.disabled = false;
+
+    if (data.success) {
+      document.getElementById('previewTo').textContent      = name;
+      document.getElementById('previewSubject').textContent = data.subject;
+      document.getElementById('previewBody').textContent    = data.body;
+      document.getElementById('emailModal').style.display   = 'flex';
+      document.getElementById('sendNowBtn').onclick = function() { sendEmail(data.email_id); };
+
+      var row = btn.closest('tr');
+      var ag  = row.querySelector('.action-group');
+      var sendBtn = ag.querySelector('.send-email-btn');
+      if (!sendBtn) {
+        sendBtn = document.createElement('button');
+        sendBtn.className   = 'btn btn-sm btn-primary send-email-btn';
+        sendBtn.textContent = 'Send';
+        ag.appendChild(sendBtn);
+      }
+      sendBtn.setAttribute('data-email-id', data.email_id);
+      sendBtn.onclick = function() {
+        document.getElementById('previewTo').textContent      = name;
+        document.getElementById('previewSubject').textContent = data.subject;
+        document.getElementById('previewBody').textContent    = data.body;
+        document.getElementById('emailModal').style.display   = 'flex';
+        document.getElementById('sendNowBtn').onclick = function() { sendEmail(data.email_id); };
+      };
+    } else {
+      showToast('Failed to generate email', 'error');
+    }
+  });
+});
+
+async function sendEmail(emailId) {
+  var sendBtn = document.getElementById('sendNowBtn');
+  sendBtn.textContent = 'Sending...';
+  sendBtn.disabled = true;
+
+  var res  = await fetch('/email/send/' + emailId, { method: 'POST' });
+  var data = await res.json();
+
+  sendBtn.textContent = 'Send Email';
+  sendBtn.disabled = false;
+
+  if (data.success) {
+    showToast('Email sent successfully!');
+    closeEmailModal();
+    setTimeout(function() { location.reload(); }, 1200);
+  } else {
+    showToast('Failed to send. Check SMTP config.', 'error');
+  }
+}
+
+function closeEmailModal() {
+  document.getElementById('emailModal').style.display = 'none';
+}
+</script>
+{% endblock %}

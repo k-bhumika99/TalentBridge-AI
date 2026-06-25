@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TalentBridge AI — {% block title %}Dashboard{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;800;900&family=Cinzel+Decorative:wght@400;700;900&family=Philosopher:ital,wght@0,400;0,700;1,400&family=Tiro+Devanagari+Latin:ital@0;1&family=Noto+Sans+Telugu:wght@400;700&family=Noto+Sans+Tamil:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body class="app-body">
+
+<nav class="app-topnav">
+  <div class="app-topnav-left">
+    <div class="sidebar-brand" style="padding:0; border:0;">
+      <span class="brand-icon">⟳</span>
+      <div>
+        <div class="brand-name">TalentBridge</div>
+        <div class="brand-sub">Smart Hiring AI</div>
+      </div>
+    </div>
+    <div class="app-topnav-links">
+      <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint=='dashboard' %}active{% endif %}">
+        <span class="nav-icon">▦</span> Dashboard
+      </a>
+      <a href="{{ url_for('candidates') }}" class="nav-item {% if request.endpoint=='candidates' %}active{% endif %}">
+        <span class="nav-icon">◉</span> Candidates
+      </a>
+      <a href="{{ url_for('jobs') }}" class="nav-item {% if request.endpoint=='jobs' %}active{% endif %}">
+        <span class="nav-icon">◈</span> Job Openings
+      </a>
+      <a href="{{ url_for('emails_log') }}" class="nav-item {% if request.endpoint=='emails_log' %}active{% endif %}">
+        <span class="nav-icon">◎</span> Email Logs
+      </a>
+      <a href="{{ url_for('poster') }}" class="nav-item {% if request.endpoint in ['poster','generate_poster'] %}active{% endif %}">
+        <span class="nav-icon">🖼</span> Posters
+      </a>
+      <a href="{{ url_for('resume_score') }}" class="nav-item {% if request.endpoint in ['resume_score','analyze_resume'] %}active{% endif %}">
+        <span class="nav-icon">📄</span> Resume Score
+      </a>
+    </div>
+  </div>
+  <div class="app-topnav-right">
+    <span class="status-dot"></span>
+    <span class="ai-status-label">AI Engine Active</span>
+    <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm">Logout</a>
+  </div>
+</nav>
+
+<main class="main-content main-content-full">
+  <div class="topbar">
+    <div class="page-title">{% block page_title %}Dashboard{% endblock %}</div>
+  </div>
+
+  <div class="content-area">
+    {% block content %}{% endblock %}
+  </div>
+</main>
+
+<!-- Toast notification -->
+<div id="toast" class="toast"></div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

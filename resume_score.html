@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% block title %}Resume Score{% endblock %}
+{% block page_title %}📄 Resume Score vs JD{% endblock %}
+
+{% block content %}
+<div class="rs-page">
+
+  <!-- LEFT: Upload Form -->
+  <div class="rs-controls">
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📄</span>
+        <div>
+          <div class="card-title">Resume Score Analyzer</div>
+          <div class="card-sub">Upload a resume PDF and match it against a job opening</div>
+        </div>
+      </div>
+
+      <form method="POST" action="{{ url_for('analyze_resume') }}" enctype="multipart/form-data" id="rsForm">
+
+        <div class="form-group" style="margin-bottom:16px">
+          <label class="form-label">Select Job Opening</label>
+          <select name="job_id" class="form-control" required>
+            <option value="">— choose a job —</option>
+            {% for j in jobs %}
+              <option value="{{ j['id'] }}" {% if selected_job and selected_job['id']==j['id'] %}selected{% endif %}>
+                {{ j['job_title'] }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px">
+          <label class="form-label">Candidate Name (optional)</label>
+          <input type="text" name="candidate_name" class="form-control"
+                 placeholder="e.g. Priya Sharma" value="{{ candidate_name or '' }}">
+        </div>
+
+        <div class="form-group" style="margin-bottom:16px">
+          <label class="form-label">Candidate Email <span style="color:var(--rose)">*</span></label>
+          <input type="email" name="candidate_email" class="form-control" required
+                 placeholder="e.g. priya@gmail.com" value="{{ candidate_email or '' }}">
+          <span style="font-size:11px;color:var(--muted)">Required to send interview email if matched</span>
+        </div>
+
+        <div class="form-group" style="margin-bottom:20px">
+          <label class="form-label">Upload Resume (PDF)</label>
+          <div class="rs-upload-zone" id="uploadZone">
+            <div class="rs-upload-icon">📎</div>
+            <div class="rs-upload-text">Drag & drop or click to upload</div>
+            <div class="rs-upload-sub">PDF files only • Max 5MB</div>
+            <input type="file" name="resume_pdf" id="resumeFile" accept=".pdf" required class="rs-file-input">
+          </div>
+          <div id="fileNameDisplay" class="rs-file-name" style="display:none"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary w-full" id="analyzeBtn">
+          <span id="analyzeLabel">🔍 Analyze Resume</span>
+        </button>
+      </form>
+    </div>
+
+    {% if selected_job %}
+    <div class="card" style="margin-top:20px">
+      <div class="card-title" style="margin-bottom:12px">Job Details</div>
+      <div class="detail-row"><span class="detail-label">Role</span><span>{{ selected_job['job_title'] }}</span></div>
+      <div class="detail-row"><span class="detail-label">Experience</span><span>{{ selected_job['experience_required'] }}+ yrs</span></div>
+      <div class="detail-row"><span class="detail-label">Skills</span>
+        <span class="skills-wrap">
+          {% for sk in selected_job['skills_required'].split(',') %}
+            <span class="skill-tag">{{ sk.strip() }}</span>
+          {% endfor %}
+        </span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: Results Panel -->
+  <div class="rs-results">
+
+    {% if email_status %}
+    <div class="rs-email-status {% if email_sent %}rs-status-ok{% else %}rs-status-fail{% endif %}">
+      {{ email_status }}
+      {% if email_sent %}<br><small>Check Email Logs page to view the sent email.</small>{% endif %}
+    </div>
+    {% endif %}
+
+    {% if error %}
+    <div class="rs-error-box">
+      ⚠️ {{ error }}
+    </div>
+    {% endif %}
+
+    {% if result %}
+    <!-- HEADER SCORE CARD -->
+    <div class="rs-score-hero">
+      <div class="rs-score-left">
+        <div class="rs-candidate-name">{{ candidate_name or 'Candidate' }}</div>
+        <div class="rs-job-label">vs {{ selected_job['job_title'] }}</div>
+        <div class="rs-recommendation rs-rec-{{ result.recommendation | lower | replace(' ','_') }}">
+          {{ result.recommendation }}
+        </div>
+      </div>
+      <div class="rs-score-right">
+        <div class="rs-big-score-wrap">
+          <svg class="rs-score-ring" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="#e8f0fe" stroke-width="10"/>
+            <circle cx="60" cy="60" r="52" fill="none"
+              stroke="{{ '#1fb878' if result.overall_score>=70 else '#e0a800' if result.overall_score>=45 else '#e8506e' }}"
+              stroke-width="10" stroke-linecap="round"
+              stroke-dasharray="{{ (result.overall_score / 100 * 326.7) | round(1) }} 326.7"
+              transform="rotate(-90 60 60)"/>
+          </svg>
+          <div class="rs-big-score-num">{{ result.overall_score }}<span>%</span></div>
+        </div>
+        <div class="rs-score-label">Overall Match</div>
+      </div>
+    </div>
+
+    <!-- DIMENSION BARS -->
+    <div class="card rs-dim-card">
+      <div class="card-title" style="margin-bottom:16px">Score Breakdown</div>
+      {% set dims = [
+        ('Skills Match',      result.skills_match,     '🔧'),
+        ('Experience Match',  result.experience_match, '💼'),
+        ('Education Match',   result.education_match,  '🎓'),
+        ('Keyword Match',     result.keyword_match,    '🔑'),
+        ('Overall Fit',       result.overall_fit,      '⭐'),
+      ] %}
+      {% for label, score, icon in dims %}
+      <div class="rs-dim-row">
+        <div class="rs-dim-label"><span>{{ icon }}</span> {{ label }}</div>
+        <div class="rs-dim-bar-wrap">
+          <div class="rs-dim-bar">
+            <div class="rs-dim-fill {% if score >= 70 %}rs-fill-green{% elif score >= 45 %}rs-fill-gold{% else %}rs-fill-red{% endif %}"
+                 ></div>
+          </div>
+          <span class="rs-dim-pct">{{ score }}%</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- SKILLS: MATCHED vs MISSING -->
+    <div class="rs-skills-grid">
+      <div class="card rs-skill-card">
+        <div class="rs-skill-card-head rs-head-green">✅ Matched Skills</div>
+        <div class="rs-skill-tags">
+          {% if result.matched_skills %}
+            {% for sk in result.matched_skills %}
+            <span class="rs-tag rs-tag-green">{{ sk }}</span>
+            {% endfor %}
+          {% else %}
+            <span class="rs-empty">None detected</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card rs-skill-card">
+        <div class="rs-skill-card-head rs-head-red">❌ Missing Skills</div>
+        <div class="rs-skill-tags">
+          {% if result.missing_skills %}
+            {% for sk in result.missing_skills %}
+            <span class="rs-tag rs-tag-red">{{ sk }}</span>
+            {% endfor %}
+          {% else %}
+            <span class="rs-empty">No major gaps</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- STRENGTHS & GAPS -->
+    <div class="rs-sg-grid">
+      <div class="card">
+        <div class="rs-sg-head rs-sg-green">💪 Strengths</div>
+        <ul class="rs-sg-list">
+          {% for s in result.strengths %}
+          <li><span class="rs-sg-dot rs-dot-green">●</span>{{ s }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      <div class="card">
+        <div class="rs-sg-head rs-sg-red">⚠️ Gaps / Concerns</div>
+        <ul class="rs-sg-list">
+          {% for g in result.gaps %}
+          <li><span class="rs-sg-dot rs-dot-red">●</span>{{ g }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+    <!-- SUMMARY -->
+    <div class="card rs-summary-card">
+      <div class="rs-summary-icon">🤖</div>
+      <div>
+        <div class="rs-summary-title">AI Summary</div>
+        <div class="rs-summary-text">{{ result.summary }}</div>
+      </div>
+    </div>
+
+    <!-- SEND EMAIL SECTION — shown only when score >= 70 -->
+    {% if result.overall_score >= 70 %}
+    <div class="rs-email-match-card">
+      <div class="rs-email-match-left">
+        <div class="rs-email-match-icon">🎉</div>
+        <div>
+          <div class="rs-email-match-title">Strong Match Detected!</div>
+          <div class="rs-email-match-sub">
+            {{ candidate_name or 'This candidate' }} scored <strong>{{ result.overall_score }}%</strong> —
+            send a personalised interview invitation email right now.
+          </div>
+        </div>
+      </div>
+      <form method="POST" action="{{ url_for('send_resume_score_email') }}" id="sendEmailForm">
+        <input type="hidden" name="job_id"          value="{{ selected_job['id'] }}">
+        <input type="hidden" name="candidate_name"  value="{{ candidate_name or '' }}">
+        <input type="hidden" name="candidate_email" value="{{ candidate_email or '' }}">
+        <input type="hidden" name="overall_score"   value="{{ result.overall_score }}">
+        <input type="hidden" name="matched_skills"  value="{{ result.matched_skills | join(', ') }}">
+        <button type="submit" class="btn btn-primary rs-send-btn" id="sendEmailBtn">
+          <span id="sendLabel">✉️ Send Interview Email</span>
+        </button>
+      </form>
+    </div>
+    {% else %}
+    <div class="rs-no-match-card">
+      <span>ℹ️</span>
+      <span>Score is below 70% — email not triggered. Improve skills to qualify for outreach.</span>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty state -->
+    <div class="rs-empty-state">
+      <div class="rs-empty-icon">📊</div>
+      <div class="rs-empty-title">Resume Analysis will appear here</div>
+      <div class="rs-empty-sub">Select a job, upload a resume PDF and click Analyze</div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// File upload UX
+const fileInput = document.getElementById('resumeFile');
+const uploadZone = document.getElementById('uploadZone');
+const fileNameDisplay = document.getElementById('fileNameDisplay');
+
+if (fileInput) {
+  uploadZone.addEventListener('click', () => fileInput.click());
+
+  uploadZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    uploadZone.classList.add('rs-upload-drag');
+  });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('rs-upload-drag'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('rs-upload-drag');
+    if (e.dataTransfer.files[0]) {
+      fileInput.files = e.dataTransfer.files;
+      showFileName(e.dataTransfer.files[0].name);
+    }
+  });
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) showFileName(fileInput.files[0].name);
+  });
+}
+
+function showFileName(name) {
+  fileNameDisplay.textContent = '📎 ' + name;
+  fileNameDisplay.style.display = 'block';
+  uploadZone.classList.add('rs-upload-selected');
+}
+
+// Loading state on submit
+document.getElementById('rsForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('analyzeBtn');
+  const lbl = document.getElementById('analyzeLabel');
+  if (lbl) lbl.textContent = '⏳ Analyzing…';
+  if (btn) btn.disabled = true;
+});
+
+// Loading state on send email
+document.getElementById('sendEmailForm')?.addEventListener('submit', function() {
+  const btn = document.getElementById('sendEmailBtn');
+  const lbl = document.getElementById('sendLabel');
+  if (lbl) lbl.textContent = '⏳ Sending…';
+  if (btn) btn.disabled = true;
+});
+
+// Animate score bars on load
+window.addEventListener('load', () => {
+  document.querySelectorAll('.rs-dim-fill').forEach(el => {
+    const w = el.style.width;
+    el.style.width = '0%';
+    setTimeout(() => { el.style.width = w; }, 100);
+  });
+});
+</script>
+{% endblock %}

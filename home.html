@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TalentBridge AI — Smart Hiring Reconnect System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Tiro+Devanagari+Latin:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body class="public-body">
+
+  <!-- NAV (Sign In / Sign Up stay here only) -->
+  <nav class="public-nav">
+    <div class="brand">
+      <span class="brand-icon">⟳</span>
+      TalentBridge AI
+    </div>
+    <div class="public-nav-links">
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm">Dashboard</a>
+        <a href="{{ url_for('logout') }}" class="btn btn-primary btn-sm">Logout</a>
+      {% else %}
+        <a href="{{ url_for('signin') }}" class="btn btn-outline btn-sm">Sign In</a>
+        <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Sign Up</a>
+      {% endif %}
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero-full">
+    <span class="hero-tag">⚡ AI-Powered Recruiting Platform</span>
+    <h1 class="indian-roman-head">TalentBridge AI<br><span>SMART HIRING RECONNECT SYSTEM</span></h1>
+    <p class="hero-lead">
+      TalentBridge AI helps HR teams reconnect with great candidates from the past. It keeps
+      track of every applicant, matches them against new job openings using AI-driven
+      scoring, and helps recruiters send short, personalised outreach emails — so good
+      talent always finds its way back.
+    </p>
+    <!-- CTA buttons appear here ONLY, NOT duplicated below -->
+    <div class="hero-actions hero-actions-center">
+      <a href="{{ url_for('signup') }}" class="btn btn-primary btn-lg">Get Started Free</a>
+      <a href="{{ url_for('signin') }}" class="btn btn-outline btn-lg">Sign In</a>
+    </div>
+    <!-- Hero visual -->
+    <div class="hero-visual">
+      <div class="hero-card hc-left">
+        <div class="hc-icon">🎯</div>
+        <div class="hc-label">Match Score</div>
+        <div class="hc-value">94%</div>
+        <div class="hc-sub">Priya Sharma — Sr. Dev</div>
+      </div>
+      <div class="hero-screen">
+        <div class="hs-topbar">
+          <span class="hs-dot r"></span><span class="hs-dot y"></span><span class="hs-dot g"></span>
+          <span class="hs-title">TalentBridge AI Dashboard</span>
+        </div>
+        <div class="hs-body">
+          <div class="hs-row">
+            <span class="hs-tag teal">Active Jobs</span>
+            <span class="hs-num">12</span>
+          </div>
+          <div class="hs-row">
+            <span class="hs-tag blue">Candidates</span>
+            <span class="hs-num">348</span>
+          </div>
+          <div class="hs-row">
+            <span class="hs-tag violet">AI Matches Today</span>
+            <span class="hs-num">27</span>
+          </div>
+          <div class="hs-bar-wrap">
+            <div class="hs-bar" style="width:72%"></div>
+            <div class="hs-bar-label">Outreach Sent: 72%</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-card hc-right">
+        <div class="hc-icon">✉️</div>
+        <div class="hc-label">Email Drafted</div>
+        <div class="hc-value">3s</div>
+        <div class="hc-sub">AI personalised</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STATS BAND -->
+  <section class="home-stats-band">
+    <div class="home-stat">
+      <div class="home-stat-num indian-roman-head">500+</div>
+      <div class="home-stat-label">Companies Onboarded</div>
+    </div>
+    <div class="home-stat-divider"></div>
+    <div class="home-stat">
+      <div class="home-stat-num indian-roman-head">1.2M</div>
+      <div class="home-stat-label">Candidates Tracked</div>
+    </div>
+    <div class="home-stat-divider"></div>
+    <div class="home-stat">
+      <div class="home-stat-num indian-roman-head">94%</div>
+      <div class="home-stat-label">Avg AI Match Accuracy</div>
+    </div>
+    <div class="home-stat-divider"></div>
+    <div class="home-stat">
+      <div class="home-stat-num indian-roman-head">3×</div>
+      <div class="home-stat-label">Faster Hiring Cycle</div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="home-section">
+    <div class="home-section-inner">
+      <div class="section-label">HOW IT WORKS</div>
+      <h2 class="section-title indian-roman-head">Three steps to rehire great talent</h2>
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-num">01</div>
+          <div class="step-icon">🗃️</div>
+          <h3>Build Your Talent Pool</h3>
+          <p>Import past applicants, store resumes, notes, and interview feedback — all in one searchable place.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">02</div>
+          <div class="step-icon">🤖</div>
+          <h3>AI Matches & Scores</h3>
+          <p>When a new role opens, our AI engine scores every candidate against the JD and surfaces the best fits instantly.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-num">03</div>
+          <div class="step-icon">📬</div>
+          <h3>Personalised Outreach</h3>
+          <p>Draft warm, personalised re-engagement emails in seconds and track opens, replies, and conversions.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="home-section home-section-alt">
+    <div class="home-section-inner">
+      <div class="section-label">FEATURES</div>
+      <h2 class="section-title indian-roman-head">Everything your recruiting team needs</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <span class="feat-icon" style="background:rgba(20,184,166,.12);color:var(--teal)">◉</span>
+          <div>
+            <h4>Candidate Database</h4>
+            <p>Centralised, searchable talent pool with skills, experience, and past interaction history.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feat-icon" style="background:rgba(47,143,224,.12);color:var(--blue)">◈</span>
+          <div>
+            <h4>Job Opening Manager</h4>
+            <p>Post and manage open positions with full JD details and automated candidate matching.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feat-icon" style="background:rgba(124,92,240,.12);color:var(--violet)">⚡</span>
+          <div>
+            <h4>AI Match Scoring</h4>
+            <p>LLM-powered scoring ranks candidates 0–100 based on skills, tenure, and role requirements.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feat-icon" style="background:rgba(224,168,0,.12);color:var(--gold)">✉️</span>
+          <div>
+            <h4>Email Automation</h4>
+            <p>Generate personalised outreach emails via AI and log every communication effortlessly.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feat-icon" style="background:rgba(31,184,120,.12);color:var(--green)">▦</span>
+          <div>
+            <h4>Hiring Dashboard</h4>
+            <p>Real-time overview of active jobs, match pipeline, and outreach performance metrics.</p>
+          </div>
+        </div>
+        <div class="feature-card">
+          <span class="feat-icon" style="background:rgba(232,80,110,.12);color:var(--rose)">🔒</span>
+          <div>
+            <h4>Secure & Private</h4>
+            <p>Role-based access, encrypted candidate data, and full GDPR-aligned data controls.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TESTIMONIAL / CTA BAND -->
+  <section class="home-cta-band">
+    <div class="home-section-inner" style="text-align:center">
+      <h2 class="section-title indian-roman-head" style="color:#fff;margin-bottom:16px;">Ready to rehire your best talent?</h2>
+      <p style="color:rgba(255,255,255,.8);font-size:17px;margin-bottom:36px;max-width:560px;margin-left:auto;margin-right:auto;">
+        Join hundreds of HR teams already using TalentBridge AI to close positions faster with candidates they already trust.
+      </p>
+      <a href="{{ url_for('signup') }}" class="btn btn-white btn-lg">Start for Free — No Card Required</a>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="home-footer">
+    <div class="hf-brand indian-roman-head">⟳ TalentBridge AI</div>
+    <div class="hf-copy">© 2025 TalentBridge AI. Smart Hiring Reconnect System. All rights reserved.</div>
+  </footer>
+
+</body>
+</html>

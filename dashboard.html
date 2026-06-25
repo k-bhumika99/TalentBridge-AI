@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card accent-teal">
+    <div class="stat-number">{{ stats.candidates }}</div>
+    <div class="stat-label">Talent Pool</div>
+    <div class="stat-icon">&#9673;</div>
+  </div>
+  <div class="stat-card accent-gold">
+    <div class="stat-number">{{ stats.jobs }}</div>
+    <div class="stat-label">Open Roles</div>
+    <div class="stat-icon">&#9672;</div>
+  </div>
+  <div class="stat-card accent-rose">
+    <div class="stat-number">{{ stats.matches }}</div>
+    <div class="stat-label">AI Matches</div>
+    <div class="stat-icon">&#9678;</div>
+  </div>
+  <div class="stat-card accent-violet">
+    <div class="stat-number">{{ stats.emails_sent }}</div>
+    <div class="stat-label">Emails Sent</div>
+    <div class="stat-icon">&#9993;</div>
+  </div>
+</div>
+
+<div class="section-header">
+  <h2 class="section-title">Recent Matches</h2>
+  <a href="{{ url_for('jobs') }}" class="btn btn-outline">Run New Match &#8594;</a>
+</div>
+
+{% if recent_matches %}
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Role Applied For</th>
+        <th>Top Skills</th>
+        <th>Match Score</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for m in recent_matches %}
+      <tr>
+        <td><span class="candidate-badge">{{ m.cname }}</span></td>
+        <td>{{ m.job_title }}</td>
+        <td class="skills-cell">
+          {% for sk in m.cskills.split(',')[:3] %}
+          <span class="skill-tag">{{ sk.strip() }}</span>
+          {% endfor %}
+        </td>
+        <td>
+          <div class="score-bar-wrap">
+          
+            <span class="score-num">{{ m.match_score|int }}%</span>
+          </div>
+        </td>
+        <td>
+          {% if m.status == 'Shortlisted' %}
+          <span class="badge badge-green">{{ m.status }}</span>
+          {% else %}
+          <span class="badge badge-gray">{{ m.status }}</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">&#10227;</div>
+  <p>No matches yet. Go to <a href="{{ url_for('jobs') }}">Job Openings</a> to run the AI matching engine.</p>
+</div>
+{% endif %}
+{% endblock %}

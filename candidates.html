@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Candidates{% endblock %}
+{% block page_title %}Talent Pool{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <h2 class="section-title">All Candidates <span class="count-badge">{{ candidates|length }}</span></h2>
+  <button class="btn btn-primary" onclick="toggleModal('addCandidateModal')">+ Add Candidate</button>
+</div>
+
+<div class="cards-grid">
+  {% for c in candidates %}
+  <div class="cand-card">
+    <div class="cand-avatar">{{ c.name[0] }}</div>
+    <div class="cand-info">
+      <div class="cand-name">{{ c.name }}</div>
+      <div class="cand-role">{{ c.previous_role }} &middot; {{ c.experience }}yr exp</div>
+      <div class="cand-skills">
+        {% for sk in c.skills.split(',')[:4] %}
+        <span class="skill-tag">{{ sk.strip() }}</span>
+        {% endfor %}
+      </div>
+      <div class="cand-email">{{ c.email }}</div>
+    </div>
+    <form method="POST" action="{{ url_for('delete_candidate', cid=c.id) }}"
+          onsubmit="return confirm('Remove this candidate?')">
+      <button type="submit" class="btn-delete" title="Remove">&#10005;</button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Add Candidate Modal -->
+<div id="addCandidateModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add Candidate</h3>
+      <button onclick="toggleModal('addCandidateModal')" class="modal-close">&#10005;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_candidate') }}">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Full Name</label>
+          <input type="text" name="name" required placeholder="e.g. Aarav Shah" />
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" required placeholder="candidate@email.com" />
+        </div>
+        <div class="form-group full">
+          <label>Skills <small>(comma separated)</small></label>
+          <input type="text" name="skills" required placeholder="Python, SQL, Flask..." />
+        </div>
+        <div class="form-group">
+          <label>Years of Experience</label>
+          <input type="number" name="experience" required min="0" max="40" placeholder="3" />
+        </div>
+        <div class="form-group">
+          <label>Previous Role</label>
+          <input type="text" name="previous_role" required placeholder="Backend Developer" />
+        </div>
+        <div class="form-group full">
+          <label>Resume Summary</label>
+          <textarea name="resume_text" rows="3" placeholder="Brief profile / resume highlights..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" onclick="toggleModal('addCandidateModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">Add Candidate</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

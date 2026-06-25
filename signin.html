@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sign In — TalentBridge AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}"/>
+</head>
+<body class="public-body">
+
+  <nav class="public-nav">
+    <a href="{{ url_for('home') }}" class="brand" style="text-decoration:none;">
+      <span class="brand-icon">⟳</span>
+      TalentBridge AI
+    </a>
+    <div class="public-nav-links">
+      {% if session.get('user_id') %}
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm">Dashboard</a>
+      {% endif %}
+      <span style="font-size:13px; color: var(--muted);">New here?</span>
+      <a href="{{ url_for('signup') }}" class="btn btn-primary btn-sm">Create Account</a>
+    </div>
+  </nav>
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="brand-icon">⟳</span> TalentBridge AI
+      </div>
+      <h1>Welcome back</h1>
+      <p class="auth-sub">Sign in to access your HR recruiter dashboard</p>
+
+      {% if error %}
+        <div class="auth-error">{{ error }}</div>
+      {% endif %}
+
+      <form class="auth-form" method="POST" action="{{ url_for('signin') }}">
+        <div class="form-group">
+          <label for="email">Work Email</label>
+          <input type="email" id="email" name="email" placeholder="you@company.com"
+                 value="{{ form.get('email','') }}" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" placeholder="••••••••" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Sign In</button>
+      </form>
+
+      <div class="auth-divider">or</div>
+      <div class="social-row">
+        <button class="social-btn" type="button" onclick="showToastDemo()">Google</button>
+        <button class="social-btn" type="button" onclick="showToastDemo()">LinkedIn</button>
+      </div>
+
+      <div class="auth-foot">
+        Don't have an account? <a href="{{ url_for('signup') }}">Sign up free</a>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    function showToastDemo() {
+      showToast('Social login is a demo placeholder', 'error');
+    }
+  </script>
+</body>
+</html>

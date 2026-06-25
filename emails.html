@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Email Logs{% endblock %}
+{% block page_title %}Email Activity Log{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <h2 class="section-title">All Outreach Emails <span class="count-badge">{{ emails|length }}</span></h2>
+</div>
+
+{% if emails %}
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Candidate</th>
+        <th>Job Role</th>
+        <th>Subject</th>
+        <th>Status</th>
+        <th>Sent At</th>
+        <th>Preview</th>
+        <th>Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in emails %}
+      <tr>
+        <td>
+          <div class="cand-name-sm">{{ e.cname }}</div>
+          <div class="cand-email-sm">{{ e.cemail }}</div>
+        </td>
+        <td>{{ e.job_title }}</td>
+        <td class="subject-cell">{{ e.email_subject }}</td>
+        <td>
+          {% if e.sent_status == 'Sent' %}
+          <span class="badge badge-green">{{ e.sent_status }}</span>
+          {% elif e.sent_status == 'Failed' %}
+          <span class="badge badge-red">{{ e.sent_status }}</span>
+          {% else %}
+          <span class="badge badge-gray">{{ e.sent_status }}</span>
+          {% endif %}
+        </td>
+        <td class="date-cell">{{ e.created_at[:16] }}</td>
+        <td>
+          <button class="btn btn-sm btn-outline preview-btn"
+                  data-subject="{{ e.email_subject | escape }}"
+                  data-body="{{ e.email_body | escape }}"
+                  data-to="{{ e.cname | escape }}">
+            Preview
+          </button>
+        </td>
+        <td>
+          <form method="POST" action="{{ url_for('delete_email', email_id=e.id) }}"
+                onsubmit="return confirm('Delete this email log entry?')">
+            <button type="submit" class="btn-delete" title="Delete">&#10005;</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty-state">
+  <div class="empty-icon">&#9678;</div>
+  <p>No emails generated yet. Go to <a href="{{ url_for('jobs') }}">Job Openings</a>, run AI matching, then generate emails.</p>
+</div>
+{% endif %}
+
+<!-- Email Preview Modal -->
+<div id="emailPreviewModal" class="modal-overlay" style="display:none">
+  <div class="modal modal-wide">
+    <div class="modal-header">
+      <h3>Email Preview</h3>
+      <button onclick="document.getElementById('emailPreviewModal').style.display='none'" class="modal-close">&#10005;</button>
+    </div>
+    <div class="email-preview">
+      <div class="email-field"><span class="email-label">To:</span> <span id="pTo"></span></div>
+      <div class="email-field"><span class="email-label">Subject:</span> <span id="pSubject"></span></div>
+      <hr class="email-divider" />
+      <div class="email-body-preview" id="pBody"></div>
+    </div>
+    <div class="modal-actions">
+      <button onclick="document.getElementById('emailPreviewModal').style.display='none'" class="btn btn-outline">Close</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.preview-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById('pTo').textContent      = btn.getAttribute('data-to');
+    document.getElementById('pSubject').textContent = btn.getAttribute('data-subject');
+    document.getElementById('pBody').textContent    = btn.getAttribute('data-body');
+    document.getElementById('emailPreviewModal').style.display = 'flex';
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Jobs{% endblock %}
+{% block page_title %}Job Openings{% endblock %}
+
+{% block content %}
+<div class="section-header">
+  <h2 class="section-title">Active Roles <span class="count-badge">{{ jobs|length }}</span></h2>
+  <button class="btn btn-primary" onclick="toggleModal('addJobModal')">+ Post Job</button>
+</div>
+
+<div class="jobs-list">
+  {% for job in jobs %}
+  <div class="job-card">
+    <div class="job-meta">
+      <div class="job-title">{{ job.job_title }}</div>
+      <div class="job-exp">{{ job.experience_required }}+ yrs required</div>
+    </div>
+    <div class="job-skills">
+      {% for sk in job.skills_required.split(',') %}
+      <span class="skill-tag">{{ sk.strip() }}</span>
+      {% endfor %}
+    </div>
+    <p class="job-desc">{{ job.job_description }}</p>
+    <div class="job-actions">
+      <button class="btn btn-primary run-match-btn"
+              data-job-id="{{ job.id }}"
+              data-job-title="{{ job.job_title | escape }}">
+        &#10227; Run AI Match
+      </button>
+      <a href="{{ url_for('view_matches', job_id=job.id) }}" class="btn btn-outline">View Matches</a>
+      <form method="POST" action="{{ url_for('delete_job', jid=job.id) }}" style="margin-left:auto"
+            onsubmit="return confirm('Delete this job?')">
+        <button type="submit" class="btn-delete">&#10005; Remove</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Add Job Modal -->
+<div id="addJobModal" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Post a New Job</h3>
+      <button onclick="toggleModal('addJobModal')" class="modal-close">&#10005;</button>
+    </div>
+    <form method="POST" action="{{ url_for('add_job') }}">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Job Title</label>
+          <input type="text" name="job_title" required placeholder="e.g. Senior Python Developer" />
+        </div>
+        <div class="form-group full">
+          <label>Skills Required <small>(comma separated)</small></label>
+          <input type="text" name="skills_required" required placeholder="Python, Flask, REST APIs..." />
+        </div>
+        <div class="form-group">
+          <label>Experience Required (years)</label>
+          <input type="number" name="experience_required" required min="0" max="20" placeholder="3" />
+        </div>
+        <div class="form-group full">
+          <label>Job Description</label>
+          <textarea name="job_description" rows="4" required placeholder="Describe the role..."></textarea>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" onclick="toggleModal('addJobModal')" class="btn btn-outline">Cancel</button>
+        <button type="submit" class="btn btn-primary">Post Job</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Match Loading Overlay -->
+<div id="matchOverlay" class="match-overlay" style="display:none">
+  <div class="match-loader">
+    <div class="loader-ring"></div>
+    <div class="loader-title">AI Matching in Progress</div>
+    <div class="loader-sub" id="matchStatus">Analyzing candidate profiles...</div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.run-match-btn').forEach(function(btn) {
+  btn.addEventListener('click', async function() {
+    var jobId    = btn.getAttribute('data-job-id');
+    var jobTitle = btn.getAttribute('data-job-title');
+    var overlay  = document.getElementById('matchOverlay');
+    var statusEl = document.getElementById('matchStatus');
+
+    overlay.style.display = 'flex';
+    statusEl.textContent  = 'Matching candidates for: ' + jobTitle;
+
+    try {
+      var res  = await fetch('/match/' + jobId, { method: 'POST' });
+      var data = await res.json();
+      overlay.style.display = 'none';
+      if (data.success) {
+        showToast('Matched ' + data.results.length + ' candidates!');
+        setTimeout(function() { window.location.href = '/matches/' + jobId; }, 800);
+      }
+    } catch (e) {
+      overlay.style.display = 'none';
+      showToast('Error running match.', 'error');
+    }
+  });
+});
+</script>
+{% endblock %}

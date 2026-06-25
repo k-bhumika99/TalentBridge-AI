@@ -1,0 +1,422 @@
+{% extends "base.html" %}
+{% block title %}Poster Generator{% endblock %}
+{% block page_title %}🖼 Poster Generator{% endblock %}
+
+{% block content %}
+<div class="poster-page">
+
+  <!-- LEFT CONTROLS -->
+  <div class="poster-controls">
+
+    <!-- LANGUAGE SWITCHER — top of left panel -->
+    {% if poster_data %}
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title" style="margin-bottom:10px">🌐 Poster Language</div>
+      <div class="lang-btn-row">
+        <button class="lang-btn lang-btn-active" data-lang="en">🇬🇧 English</button>
+        <button class="lang-btn" data-lang="hi">🇮🇳 हिन्दी</button>
+        <button class="lang-btn" data-lang="te">తెలుగు</button>
+        <button class="lang-btn" data-lang="ta">தமிழ்</button>
+      </div>
+      <div id="translateStatus" style="margin-top:8px;font-size:12px;color:#14b8a6;display:none;">⏳ Translating entire poster…</div>
+    </div>
+    {% endif %}
+
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">✦</span>
+        <div>
+          <div class="card-title">Generate Hiring Poster</div>
+          <div class="card-sub">AI crafts a professional poster from your job listing</div>
+        </div>
+      </div>
+      <form method="POST" action="{{ url_for('generate_poster') }}" id="posterForm">
+        <div class="form-group">
+          <label class="form-label">Select Job Opening</label>
+          <select name="job_id" class="form-control" required>
+            <option value="">— choose a job —</option>
+            {% for j in jobs %}
+              <option value="{{ j['id'] }}" {% if selected_job and selected_job['id']==j['id'] %}selected{% endif %}>{{ j['job_title'] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary w-full" id="genBtn">
+          <span id="genLabel">✦ Generate Poster</span>
+        </button>
+      </form>
+      {% if poster_data %}
+      <div style="margin-top:16px; display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-outline w-full" onclick="downloadPoster()">⬇ Download PNG</button>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if selected_job %}
+    <div class="card" style="margin-top:20px">
+      <div class="card-title" style="margin-bottom:12px">Job Details</div>
+      <div class="detail-row"><span class="detail-label">Role</span><span>{{ selected_job['job_title'] }}</span></div>
+      <div class="detail-row"><span class="detail-label">Experience</span><span>{{ selected_job['experience_required'] }}+ years</span></div>
+      <div class="detail-row"><span class="detail-label">Skills</span><span class="skills-wrap">
+        {% for sk in selected_job['skills_required'].split(',') %}
+          <span class="skill-tag">{{ sk.strip() }}</span>
+        {% endfor %}
+      </span></div>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- RIGHT: POSTER CANVAS -->
+  <div class="poster-preview-wrap">
+    {% if poster_data %}
+
+    <div class="poster-canvas" id="posterCanvas">
+
+      <!-- ① HERO TOP BANNER -->
+      <div class="pc-top-bar">
+        <div class="pc-top-left">
+          <div class="pc-we-are" id="txt-we-are">WE'RE</div>
+          <div class="pc-hiring-word" id="txt-hiring">HIRING!</div>
+        </div>
+        <div class="pc-top-center">
+          <div class="pc-role-title" id="txt-role-title">{{ selected_job['job_title'] }}</div>
+          <div class="pc-role-sub" id="txt-tagline">{{ poster_data['tagline'] }}</div>
+        </div>
+        <div class="pc-top-right">
+          <div class="pc-brand-mark">
+            <span class="pc-spin-logo">⟳</span>
+            <div class="pc-brand-name">TalentBridge<br><span>AI</span></div>
+          </div>
+          <div class="pc-megaphone">📣</div>
+        </div>
+      </div>
+
+      <!-- ② INFO ICONS ROW -->
+      <div class="pc-info-strip">
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">📍</div>
+          <div class="pc-cell-label" id="txt-location">Location</div>
+          <div class="pc-cell-val" id="txt-location-val">{{ selected_job.get('location', 'Mohali') }}</div>
+        </div>
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">🎓</div>
+          <div class="pc-cell-label" id="txt-education">Education</div>
+          <div class="pc-cell-val" id="txt-graduation">Graduation<br>(Minimum)</div>
+        </div>
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">💼</div>
+          <div class="pc-cell-label" id="txt-experience">Experience</div>
+          <div class="pc-cell-val">{{ selected_job['experience_required'] }}+ <span id="txt-year">Year</span></div>
+        </div>
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">💰</div>
+          <div class="pc-cell-label" id="txt-salary">Salary</div>
+          <div class="pc-cell-val" id="txt-hike">Hike on Current</div>
+        </div>
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">🗓️</div>
+          <div class="pc-cell-label" id="txt-working-days">Working Days</div>
+          <div class="pc-cell-val" id="txt-days5">5 Days</div>
+        </div>
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">🌙</div>
+          <div class="pc-cell-label" id="txt-shift">Shift</div>
+          <div class="pc-cell-val" id="txt-night-shift">Night Shift</div>
+        </div>
+        <div class="pc-info-cell">
+          <div class="pc-cell-emoji">🚌</div>
+          <div class="pc-cell-label" id="txt-cab">Cab Facility</div>
+          <div class="pc-cell-val" id="txt-available">Available</div>
+        </div>
+      </div>
+
+      <!-- ③ TWO-COLUMN BODY -->
+      <div class="pc-body-grid">
+        <div class="pc-body-left">
+          <div class="pc-section-badge pc-badge-blue">
+            <span>🔑</span> <span id="txt-key-resp">KEY RESPONSIBILITIES</span>
+          </div>
+          <ul class="pc-list" id="list-responsibilities">
+            {% for r in poster_data['key_responsibilities'] %}
+            <li><span class="pc-list-dot">●</span>{{ r }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        <div class="pc-body-right">
+          <div class="pc-section-badge pc-badge-teal">
+            <span>✅</span> <span id="txt-requirements">REQUIREMENTS</span>
+          </div>
+          <ul class="pc-list pc-list-alt" id="list-perks">
+            {% for p in poster_data['perks'] %}
+            <li><span class="pc-list-dot pc-dot-teal">●</span>{{ p }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+
+      <!-- ④ GREAT OPPORTUNITY BAND -->
+      <div class="pc-opp-band">
+        <span class="pc-opp-star">⭐</span>
+        <div>
+          <div class="pc-opp-title" id="txt-great-opp">GREAT OPPORTUNITY TO GROW IN THE US HEALTHCARE DOMAIN!</div>
+          <div class="pc-opp-sub" id="txt-apply-cta">{{ poster_data['apply_cta'] }}</div>
+        </div>
+      </div>
+
+      <!-- ⑤ APPLY FOOTER -->
+      <div class="pc-footer-bar">
+        <div class="pc-apply-badge">
+          <span id="txt-apply">APPLY</span><br><span id="txt-now">NOW</span>
+        </div>
+        <div class="pc-footer-contacts">
+          <div class="pc-contact-item">✉️ <span>careers@talentbridge.ai</span></div>
+          <div class="pc-contact-item">📱 <span>talentbridge.ai/careers</span></div>
+          <div class="pc-contact-item">💬 <span>84375 41369</span></div>
+        </div>
+        <div class="pc-footer-qr">
+          <div class="pc-qr-box" id="qrcode"></div>
+          <div class="pc-qr-label" id="txt-scan">Scan to Apply</div>
+        </div>
+        <div class="pc-footer-brand">
+          <span class="pc-footer-spin">⟳</span>
+          <div class="pc-footer-brand-name">TalentBridge AI</div>
+          <div class="pc-footer-brand-sub" id="txt-powered">Smart Hiring Reconnect</div>
+        </div>
+      </div>
+
+      <!-- ⑥ HASHTAGS -->
+      <div class="pc-hashtags" id="txt-hashtags">
+        <span>#Hiring</span> <span>#MedicalBilling</span> <span>#PaymentPosting</span>
+        <span>#USHealthcare</span> <span>#NightShift</span> <span>#HealthcareJobs</span>
+      </div>
+
+    </div><!-- /poster-canvas -->
+
+    <!-- embed poster data for JS -->
+    <script id="posterDataJson" type="application/json">{{ poster_data | tojson }}</script>
+    <script id="selectedJobJson" type="application/json">{{ selected_job | tojson }}</script>
+
+    {% else %}
+    <div class="poster-empty">
+      <div class="poster-empty-icon">🖼</div>
+      <div class="poster-empty-title">Your poster will appear here</div>
+      <div class="poster-empty-sub">Select a job opening and click Generate Poster</div>
+    </div>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+// QR Code
+const qrEl = document.getElementById('qrcode');
+if (qrEl) {
+  new QRCode(qrEl, {
+    text: 'https://talentbridge.ai/careers',
+    width: 76, height: 76,
+    colorDark: '#003399', colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+}
+
+// Form loading state
+document.getElementById('posterForm')?.addEventListener('submit', function() {
+  const lbl = document.getElementById('genLabel');
+  const btn = document.getElementById('genBtn');
+  if (lbl) lbl.textContent = '✦ Generating…';
+  if (btn) btn.disabled = true;
+});
+
+// Download
+function downloadPoster() {
+  const canvas = document.getElementById('posterCanvas');
+  if (!canvas) return;
+  html2canvas(canvas, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(c => {
+    const a = document.createElement('a');
+    a.download = 'talentbridge_poster.png';
+    a.href = c.toDataURL('image/png');
+    a.click();
+  });
+}
+
+// ── STATIC UI TRANSLATIONS (labels, headings) ─────────────────────────────
+const UI_STRINGS = {
+  en: {
+    we_are: "WE'RE", hiring: "HIRING!",
+    location: "Location", education: "Education", graduation: "Graduation<br>(Minimum)",
+    experience: "Experience", year: "Year", salary: "Salary", hike: "Hike on Current",
+    working_days: "Working Days", days5: "5 Days", shift: "Shift", night_shift: "Night Shift",
+    cab: "Cab Facility", available: "Available",
+    key_resp: "KEY RESPONSIBILITIES", requirements: "REQUIREMENTS",
+    great_opp: "GREAT OPPORTUNITY TO GROW IN THE US HEALTHCARE DOMAIN!",
+    apply: "APPLY", now: "NOW", scan: "Scan to Apply", powered: "Smart Hiring Reconnect",
+    hashtags: "#Hiring #MedicalBilling #PaymentPosting #USHealthcare #NightShift #HealthcareJobs",
+    font: "inherit"
+  },
+  hi: {
+    we_are: "हम", hiring: "भर्ती!",
+    location: "स्थान", education: "शिक्षा", graduation: "स्नातक<br>(न्यूनतम)",
+    experience: "अनुभव", year: "वर्ष", salary: "वेतन", hike: "वर्तमान पर वृद्धि",
+    working_days: "कार्य दिवस", days5: "5 दिन", shift: "शिफ्ट", night_shift: "रात्रि शिफ्ट",
+    cab: "कैब सुविधा", available: "उपलब्ध",
+    key_resp: "मुख्य जिम्मेदारियाँ", requirements: "आवश्यकताएँ",
+    great_opp: "US हेल्थकेयर डोमेन में बढ़ने का शानदार अवसर!",
+    apply: "आवेदन", now: "करें", scan: "स्कैन करके आवेदन करें", powered: "स्मार्ट हायरिंग",
+    hashtags: "#भर्ती #मेडिकलबिलिंग #पेमेंटपोस्टिंग #USहेल्थकेयर #नाइटशिफ्ट #हेल्थकेयरजॉब्स",
+    font: "'Noto Sans Devanagari', sans-serif"
+  },
+  te: {
+    we_are: "మేము", hiring: "నియామకం!",
+    location: "స్థానం", education: "విద్య", graduation: "పట్టభద్రుడు<br>(కనిష్టంగా)",
+    experience: "అనుభవం", year: "సంవత్సరం", salary: "జీతం", hike: "పెంపు అందుబాటులో",
+    working_days: "పని దినాలు", days5: "5 రోజులు", shift: "షిఫ్ట్", night_shift: "రాత్రి షిఫ్ట్",
+    cab: "క్యాబ్ సదుపాయం", available: "అందుబాటులో",
+    key_resp: "ముఖ్య బాధ్యతలు", requirements: "అర్హతలు",
+    great_opp: "US హెల్త్‌కేర్ రంగంలో ఎదగడానికి అద్భుతమైన అవకాశం!",
+    apply: "దరఖాస్తు", now: "చేయండి", scan: "స్కాన్ చేసి దరఖాస్తు", powered: "స్మార్ట్ హైరింగ్",
+    hashtags: "#నియామకం #మెడికల్‌బిల్లింగ్ #పేమెంట్‌పోస్టింగ్ #USహెల్త్‌కేర్ #నైట్‌షిఫ్ట్ #హెల్త్‌కేర్‌జాబ్స్",
+    font: "'Noto Sans Telugu', sans-serif"
+  },
+  ta: {
+    we_are: "நாங்கள்", hiring: "வேலை!",
+    location: "இடம்", education: "கல்வி", graduation: "பட்டதாரி<br>(குறைந்தபட்சம்)",
+    experience: "அனுபவம்", year: "ஆண்டு", salary: "சம்பளம்", hike: "தற்போதையதில் உயர்வு",
+    working_days: "வேலை நாட்கள்", days5: "5 நாட்கள்", shift: "ஷிஃப்ட்", night_shift: "இரவு ஷிஃப்ட்",
+    cab: "கேப் வசதி", available: "கிடைக்கிறது",
+    key_resp: "முக்கிய பொறுப்புகள்", requirements: "தேவைகள்",
+    great_opp: "US சுகாதாரத் துறையில் வளர சிறந்த வாய்ப்பு!",
+    apply: "விண்ணப்பி", now: "க்கவும்", scan: "ஸ்கேன் செய்து விண்ணப்பி", powered: "ஸ்மார்ட் ஹையரிங்",
+    hashtags: "#வேலை #மருத்துவபில்லிங் #கட்டணப்பதிவு #USசுகாதாரம் #இரவுஷிஃப்ட் #சுகாதாரவேலை",
+    font: "'Noto Sans Tamil', sans-serif"
+  }
+};
+
+// Helper to set innerHTML on element by id
+function setHTML(id, val) {
+  const el = document.getElementById(id);
+  if (el && val !== undefined) el.innerHTML = val;
+}
+
+// Render responsibilities list
+function renderList(listId, items, dotClass) {
+  const ul = document.getElementById(listId);
+  if (!ul) return;
+  ul.innerHTML = items.map(item =>
+    `<li><span class="pc-list-dot ${dotClass || ''}">●</span>${item}</li>`
+  ).join('');
+}
+
+// Original English poster data (from server)
+const ORIG_DATA = JSON.parse(document.getElementById('posterDataJson')?.textContent || '{}');
+const ORIG_JOB  = JSON.parse(document.getElementById('selectedJobJson')?.textContent || '{}');
+
+let currentLang = 'en';
+let translating = false;
+
+async function applyLang(lang) {
+  if (translating) return;
+  const ui = UI_STRINGS[lang] || UI_STRINGS['en'];
+  const poster = document.getElementById('posterCanvas');
+  if (!poster) return;
+
+  // 1. Apply static UI labels immediately
+  poster.style.fontFamily = ui.font;
+  setHTML('txt-we-are', ui.we_are);
+  setHTML('txt-hiring', ui.hiring);
+  setHTML('txt-location', ui.location);
+  setHTML('txt-education', ui.education);
+  setHTML('txt-graduation', ui.graduation);
+  setHTML('txt-experience', ui.experience);
+  setHTML('txt-year', ui.year);
+  setHTML('txt-salary', ui.salary);
+  setHTML('txt-hike', ui.hike);
+  setHTML('txt-working-days', ui.working_days);
+  setHTML('txt-days5', ui.days5);
+  setHTML('txt-shift', ui.shift);
+  setHTML('txt-night-shift', ui.night_shift);
+  setHTML('txt-cab', ui.cab);
+  setHTML('txt-available', ui.available);
+  setHTML('txt-key-resp', ui.key_resp);
+  setHTML('txt-requirements', ui.requirements);
+  setHTML('txt-great-opp', ui.great_opp);
+  setHTML('txt-apply', ui.apply);
+  setHTML('txt-now', ui.now);
+  setHTML('txt-scan', ui.scan);
+  setHTML('txt-powered', ui.powered);
+
+  // Translate hashtags
+  const hashEl = document.getElementById('txt-hashtags');
+  if (hashEl && ui.hashtags) {
+    hashEl.innerHTML = ui.hashtags.split(' ').map(h => `<span>${h}</span>`).join(' ');
+  }
+
+  // 2. For English, restore original AI content immediately
+  if (lang === 'en') {
+    setHTML('txt-tagline', ORIG_DATA.tagline || '');
+    setHTML('txt-apply-cta', ORIG_DATA.apply_cta || '');
+    setHTML('txt-role-title', ORIG_JOB.job_title || '');
+    setHTML('txt-location-val', ORIG_JOB.location || 'Mohali');
+    renderList('list-responsibilities', ORIG_DATA.key_responsibilities || []);
+    renderList('list-perks', ORIG_DATA.perks || [], 'pc-dot-teal');
+    return;
+  }
+
+  // 3. For other languages, call server to AI-translate all dynamic content
+  translating = true;
+  const statusEl = document.getElementById('translateStatus');
+  if (statusEl) statusEl.style.display = 'block';
+
+  // Show loading placeholders
+  setHTML('txt-tagline', '⏳ Translating…');
+  setHTML('txt-apply-cta', '⏳');
+  setHTML('txt-role-title', '⏳');
+  setHTML('txt-location-val', '⏳');
+  renderList('list-responsibilities', ['⏳ Translating…']);
+  renderList('list-perks', ['⏳ Translating…'], 'pc-dot-teal');
+
+  try {
+    const resp = await fetch('/poster/translate-ajax', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ lang, poster_data: ORIG_DATA, job: ORIG_JOB })
+    });
+    if (!resp.ok || !resp.headers.get('content-type')?.includes('application/json')) {
+      throw new Error('Bad response from server');
+    }
+    const translated = await resp.json();
+
+    setHTML('txt-tagline', translated.tagline || '');
+    setHTML('txt-apply-cta', translated.apply_cta || '');
+    setHTML('txt-role-title', translated.job_title || ORIG_JOB.job_title || '');
+    setHTML('txt-location-val', translated.location || ORIG_JOB.location || 'Mohali');
+    renderList('list-responsibilities', translated.key_responsibilities || []);
+    renderList('list-perks', translated.perks || [], 'pc-dot-teal');
+  } catch (e) {
+    // On error, restore English
+    setHTML('txt-tagline', ORIG_DATA.tagline || '');
+    setHTML('txt-apply-cta', ORIG_DATA.apply_cta || '');
+    setHTML('txt-role-title', ORIG_JOB.job_title || '');
+    setHTML('txt-location-val', ORIG_JOB.location || 'Mohali');
+    renderList('list-responsibilities', ORIG_DATA.key_responsibilities || []);
+    renderList('list-perks', ORIG_DATA.perks || [], 'pc-dot-teal');
+  } finally {
+    translating = false;
+    if (statusEl) statusEl.style.display = 'none';
+  }
+}
+
+// Language switcher buttons
+document.querySelectorAll('.lang-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    if (translating) return;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('lang-btn-active'));
+    this.classList.add('lang-btn-active');
+    applyLang(this.dataset.lang);
+  });
+});
+</script>
+{% endblock %}
